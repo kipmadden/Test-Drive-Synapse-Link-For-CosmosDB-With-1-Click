@@ -1,0 +1,14 @@
+{
+	"name": "sparkConfiguration1",
+	"properties": {
+		"configs": {
+			"value": "kip"
+		},
+		"created": "2025-04-18T13:12:15.7110000-05:00",
+		"createdBy": "KipM@NeudesicFabric.onmicrosoft.com",
+		"annotations": [],
+		"configMergeRule": {
+			"artifact.currentOperation.value": "replace"
+		}
+	}
+}
