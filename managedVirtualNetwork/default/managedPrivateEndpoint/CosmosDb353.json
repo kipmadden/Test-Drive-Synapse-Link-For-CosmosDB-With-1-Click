@@ -1,0 +1,7 @@
+{
+	"name": "CosmosDb353",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/41918b4b-7cb5-4e49-a80a-8ef16287837d/resourceGroups/Fabric-Retail-Demo/providers/Microsoft.DocumentDB/databaseAccounts/neu-cosmos-dev",
+		"groupId": "Sql"
+	}
+}
