@@ -5,8 +5,8 @@
 		"annotations": [],
 		"type": "CosmosDb",
 		"typeProperties": {
-			"connectionString": "",
-			"encryptedCredential": ""
+			"connectionString": "AccountEndpoint=https://sfr-cosmos-dev.documents.azure.com:443/;Database=CosmosDemoDB;",
+			"encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIlNZTkFQU0VARURDRDY0OTgtQzQzRS00NDM5LTk5NjctMTNCQzcwQjI3MzdBXzM5ZWVkMjcxLWQwYTEtNGIyZi1iOGU1LTNjNjhhOTBjYTkwZCINCn0="
 		},
 		"connectVia": {
 			"referenceName": "AutoResolveIntegrationRuntime",
