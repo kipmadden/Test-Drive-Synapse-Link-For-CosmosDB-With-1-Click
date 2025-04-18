@@ -1,0 +1,15 @@
+{
+	"name": "CosmosDBLink",
+	"properties": {
+		"annotations": [],
+		"type": "CosmosDb",
+		"typeProperties": {
+			"accountEndpoint": "https://neu-cosmos-dev.documents.azure.com:443/",
+			"database": "CosmosDemoDB"
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
