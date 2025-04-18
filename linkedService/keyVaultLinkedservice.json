@@ -1,0 +1,10 @@
+{
+	"name": "keyVaultLinkedservice",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://kvret556lyqbgc73lapoc.vault.azure.net/"
+		}
+	}
+}
