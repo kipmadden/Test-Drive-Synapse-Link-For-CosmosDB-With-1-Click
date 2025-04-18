@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "7945d01f-5873-47dc-8f74-7d3088fb3501"
+				"spark.autotune.trackingId": "68c3f8e5-88b4-4036-9eb9-5cd710f8159d"
 			}
 		},
 		"metadata": {
@@ -107,7 +107,7 @@
 					"AMLWssubscription_id='41918b4b-7cb5-4e49-a80a-8ef16287837d'\n",
 					"AMLWsresource_group='Fabric-Retail-Demo'"
 				],
-				"execution_count": 1
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -167,7 +167,7 @@
 					"    .mode('append')\\\n",
 					"    .save()"
 				],
-				"execution_count": 2
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",

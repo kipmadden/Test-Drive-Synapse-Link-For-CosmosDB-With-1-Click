@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "19",
 				"spark.dynamicAllocation.maxExecutors": "19",
-				"spark.autotune.trackingId": "bad02658-24b3-49e8-9a4a-175ae3efa712"
+				"spark.autotune.trackingId": "471bed98-2439-4213-9bb7-79815a4c7f61"
 			}
 		},
 		"metadata": {
@@ -109,7 +109,7 @@
 					"# Anomoly Detector Cognitive Service key (retpoc)\n",
 					"Cognitive_Services_Key='feb81b703e864812b9f041e141acd177'"
 				],
-				"execution_count": 1
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -147,7 +147,7 @@
 					"                .load()\n",
 					"            )"
 				],
-				"execution_count": 2
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -186,7 +186,7 @@
 					"                    .drop(\"timestamp\", \"value\")\n",
 					"                )"
 				],
-				"execution_count": 3
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -221,14 +221,14 @@
 					"                    .format(\"cosmos.oltp\")\\\n",
 					"                    .outputMode(\"append\")\\\n",
 					"                    .option(\"spark.cosmos.connection.mode\", \"gateway\") \\\n",
-					"                    .option(\"spark.synapse.linkedService\", \"CosmosDBLSCosmosDemoDB1\")\\\n",
+					"                    .option(\"spark.synapse.linkedService\", \"CosmosDbLink\")\\\n",
 					"                    .option(\"spark.cosmos.container\", \"IoTSignals\")\\\n",
 					"                    .option(\"checkpointLocation\", \"/writeCheckpointDir\")\\\n",
 					"                    .start()\n",
 					"streamQuery.awaitTermination(180)\n",
 					"streamQuery.stop()"
 				],
-				"execution_count": 6
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
