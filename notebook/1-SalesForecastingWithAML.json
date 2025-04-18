@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "076e6eac-9711-4ae1-8d00-5980c9508e80"
+				"spark.autotune.trackingId": "2d2b3786-ff41-44e4-9cd3-9fb041ff1f00"
 			}
 		},
 		"metadata": {
@@ -69,8 +69,8 @@
 					}
 				},
 				"source": [
-					"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/synapse-cosmosdb.png\" alt=\"Surface Device\" width=\"75%\"/>\r\n",
-					"\r\n",
+					"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/synapse-cosmosdb.png\" alt=\"Surface Device\" width=\"75%\"/>\n",
+					"\n",
 					""
 				]
 			},
@@ -84,8 +84,8 @@
 					}
 				},
 				"source": [
-					"### Replace all \"AML\" placeholders with your own information,Replace subscription_id , resource_group with values before execution\r\n",
-					"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/SF_Ws_Variables.gif\" alt=\"Surface Device\" width=\"75%\"/>\r\n",
+					"### Replace all \"AML\" placeholders with your own information,Replace subscription_id , resource_group with values before execution\n",
+					"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/SF_Ws_Variables.gif\" alt=\"Surface Device\" width=\"75%\"/>\n",
 					""
 				]
 			},
@@ -103,9 +103,9 @@
 					}
 				},
 				"source": [
-					"AMLWsname='<Name For AML Workspace to be Deployed>'\r\n",
-					"AMLWssubscription_id='<Subscription Id Where AML Workspace will be created, Same Subscription where Package is Deployed>'\r\n",
-					"AMLWsresource_group='<Resource Group Where AML Workspace will be created.Same Resource group where Package is Deployed>'"
+					"AMLWsname='ret-amlws-dev'\n",
+					"AMLWssubscription_id='41918b4b-7cb5-4e49-a80a-8ef16287837d'\n",
+					"AMLWsresource_group='Fabric-Retail-Demo'"
 				],
 				"execution_count": 1
 			},
@@ -137,37 +137,37 @@
 					"collapsed": true
 				},
 				"source": [
-					"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/Products.csv'\r\n",
-					"dfProducts = spark.read.csv(path, header=True, inferSchema=True)\r\n",
-					"dfProducts.write\\\r\n",
-					"    .format(\"cosmos.oltp\")\\\r\n",
-					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\r\n",
-					"    .option(\"spark.cosmos.container\", \"Products\")\\\r\n",
-					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\r\n",
-					"    .mode('append')\\\r\n",
-					"    .save()\r\n",
-					"\r\n",
-					"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/RetailSales.csv'\r\n",
-					"dfRetailSales = spark.read.csv(path, header=True, inferSchema=True)\r\n",
-					"dfRetailSales.write\\\r\n",
-					"    .format(\"cosmos.oltp\")\\\r\n",
-					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\r\n",
-					"    .option(\"spark.cosmos.container\", \"RetailSales\")\\\r\n",
-					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\r\n",
-					"    .mode('append')\\\r\n",
-					"    .save()\r\n",
-					"\r\n",
-					"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/StoreDemoGraphics.csv'\r\n",
-					"dfStoreDemoGraphics = spark.read.csv(path, header=True, inferSchema=True)\r\n",
-					"dfStoreDemoGraphics.write\\\r\n",
-					"    .format(\"cosmos.oltp\")\\\r\n",
-					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\r\n",
-					"    .option(\"spark.cosmos.container\", \"StoreDemoGraphics\")\\\r\n",
-					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\r\n",
-					"    .mode('append')\\\r\n",
+					"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/Products.csv'\n",
+					"dfProducts = spark.read.csv(path, header=True, inferSchema=True)\n",
+					"dfProducts.write\\\n",
+					"    .format(\"cosmos.oltp\")\\\n",
+					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
+					"    .option(\"spark.cosmos.container\", \"Products\")\\\n",
+					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\n",
+					"    .mode('append')\\\n",
+					"    .save()\n",
+					"\n",
+					"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/RetailSales.csv'\n",
+					"dfRetailSales = spark.read.csv(path, header=True, inferSchema=True)\n",
+					"dfRetailSales.write\\\n",
+					"    .format(\"cosmos.oltp\")\\\n",
+					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
+					"    .option(\"spark.cosmos.container\", \"RetailSales\")\\\n",
+					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\n",
+					"    .mode('append')\\\n",
+					"    .save()\n",
+					"\n",
+					"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/StoreDemoGraphics.csv'\n",
+					"dfStoreDemoGraphics = spark.read.csv(path, header=True, inferSchema=True)\n",
+					"dfStoreDemoGraphics.write\\\n",
+					"    .format(\"cosmos.oltp\")\\\n",
+					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
+					"    .option(\"spark.cosmos.container\", \"StoreDemoGraphics\")\\\n",
+					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\n",
+					"    .mode('append')\\\n",
 					"    .save()"
 				],
-				"execution_count": 16
+				"execution_count": 2
 			},
 			{
 				"cell_type": "markdown",
@@ -287,13 +287,13 @@
 					"collapsed": true
 				},
 				"source": [
-					"from azureml.core import Workspace\r\n",
-					"\r\n",
-					"ws = Workspace.create(name=AMLWsname,\r\n",
-					"               subscription_id=AMLWssubscription_id,\r\n",
-					"               resource_group=AMLWsresource_group,\r\n",
-					"               create_resource_group=True,\r\n",
-					"               location='South Central US' ## Optional, Update If Required\r\n",
+					"from azureml.core import Workspace\n",
+					"\n",
+					"ws = Workspace.create(name=AMLWsname,\n",
+					"               subscription_id=AMLWssubscription_id,\n",
+					"               resource_group=AMLWsresource_group,\n",
+					"               create_resource_group=True,\n",
+					"               location='South Central US' ## Optional, Update If Required\n",
 					"               )"
 				],
 				"execution_count": 15
