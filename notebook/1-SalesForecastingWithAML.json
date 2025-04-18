@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "e838509c-9ddc-4d0a-b534-a62e56f95201"
+				"spark.autotune.trackingId": "dcba6084-7a3a-4d12-a4ee-b526c71ec39e"
 			}
 		},
 		"metadata": {
@@ -107,7 +107,7 @@
 					"AMLWssubscription_id='41918b4b-7cb5-4e49-a80a-8ef16287837d'\n",
 					"AMLWsresource_group='Fabric-Retail-Demo'"
 				],
-				"execution_count": 3
+				"execution_count": 10
 			},
 			{
 				"cell_type": "markdown",
@@ -141,7 +141,7 @@
 					"dfProducts = spark.read.csv(path, header=True, inferSchema=True)\n",
 					"dfProducts.write\\\n",
 					"    .format(\"cosmos.oltp\")\\\n",
-					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
+					"    .option(\"spark.synapse.linkedService\", \"CosmosDbLink\")\\\n",
 					"    .option(\"spark.cosmos.container\", \"Products\")\\\n",
 					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\n",
 					"    .mode('append')\\\n",
@@ -151,7 +151,7 @@
 					"dfRetailSales = spark.read.csv(path, header=True, inferSchema=True)\n",
 					"dfRetailSales.write\\\n",
 					"    .format(\"cosmos.oltp\")\\\n",
-					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
+					"    .option(\"spark.synapse.linkedService\", \"CosmosDbLink\")\\\n",
 					"    .option(\"spark.cosmos.container\", \"RetailSales\")\\\n",
 					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\n",
 					"    .mode('append')\\\n",
@@ -161,13 +161,13 @@
 					"dfStoreDemoGraphics = spark.read.csv(path, header=True, inferSchema=True)\n",
 					"dfStoreDemoGraphics.write\\\n",
 					"    .format(\"cosmos.oltp\")\\\n",
-					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
+					"    .option(\"spark.synapse.linkedService\", \"CosmosDbLink\")\\\n",
 					"    .option(\"spark.cosmos.container\", \"StoreDemoGraphics\")\\\n",
 					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\n",
 					"    .mode('append')\\\n",
 					"    .save()"
 				],
-				"execution_count": 4
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -195,18 +195,18 @@
 					"create database if not exists RetailSalesDB;\n",
 					"\n",
 					"create table if not exists RetailSalesDB.RetailSales using cosmos.olap options (\n",
-					"    spark.synapse.linkedService 'CosmosDBLink',\n",
+					"    spark.synapse.linkedService 'CosmosDbLink',\n",
 					"    spark.cosmos.preferredRegions 'South Central US',  --Optional, Update If Required\n",
 					"    spark.cosmos.container 'RetailSales'\n",
 					");\n",
 					"\n",
 					"create table if not exists RetailSalesDB.StoreDemographics using cosmos.olap options (\n",
-					"    spark.synapse.linkedService 'CosmosDBLink',\n",
+					"    spark.synapse.linkedService 'CosmosDbLink',\n",
 					"    spark.cosmos.preferredRegions 'South Central US', --Optional, Update If Required\n",
 					"    spark.cosmos.container 'StoreDemoGraphics'\n",
 					");\n",
 					"create table if not exists RetailSalesDB.Product using cosmos.olap options (\n",
-					"    spark.synapse.linkedService 'CosmosDBLink',\n",
+					"    spark.synapse.linkedService 'CosmosDbLink',\n",
 					"    spark.cosmos.preferredRegions 'South Central US', --Optional, Update If Required\n",
 					"    spark.cosmos.container 'Products'\n",
 					");"

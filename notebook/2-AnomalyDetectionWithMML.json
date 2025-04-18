@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "19",
 				"spark.dynamicAllocation.maxExecutors": "19",
-				"spark.autotune.trackingId": "8177db6f-f9f9-43d8-9ad0-f76872502493"
+				"spark.autotune.trackingId": "e11e3537-dcfe-4eeb-a3b4-5e62257948c0"
 			}
 		},
 		"metadata": {
@@ -109,7 +109,7 @@
 					"# Anomoly Detector Cognitive Service key (retpoc)\n",
 					"Cognitive_Services_Key='feb81b703e864812b9f041e141acd177'"
 				],
-				"execution_count": 17
+				"execution_count": 24
 			},
 			{
 				"cell_type": "markdown",
@@ -147,7 +147,7 @@
 					"                .load()\n",
 					"            )"
 				],
-				"execution_count": 18
+				"execution_count": 25
 			},
 			{
 				"cell_type": "markdown",
@@ -186,7 +186,7 @@
 					"                    .drop(\"timestamp\", \"value\")\n",
 					"                )"
 				],
-				"execution_count": 19
+				"execution_count": 26
 			},
 			{
 				"cell_type": "markdown",
@@ -220,7 +220,6 @@
 					"                    .writeStream\\\n",
 					"                    .format(\"cosmos.oltp\")\\\n",
 					"                    .outputMode(\"append\")\\\n",
-					"                    .option(\"spark.cosmos.connection.mode\", \"gateway\") \\\n",
 					"                    .option(\"spark.synapse.linkedService\", \"CosmosDbLink\")\\\n",
 					"                    .option(\"spark.cosmos.container\", \"IoTSignals\")\\\n",
 					"                    .option(\"checkpointLocation\", \"/writeCheckpointDir\")\\\n",
@@ -228,7 +227,7 @@
 					"streamQuery.awaitTermination(180)\n",
 					"streamQuery.stop()"
 				],
-				"execution_count": 23
+				"execution_count": 29
 			},
 			{
 				"cell_type": "markdown",
@@ -262,13 +261,13 @@
 					"dfDeviceInfo = spark.read.csv(path, header=True, inferSchema=True)\n",
 					"dfDeviceInfo.write\\\n",
 					"    .format(\"cosmos.oltp\")\\\n",
-					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
+					"    .option(\"spark.synapse.linkedService\", \"CosmosDbLink\")\\\n",
 					"    .option(\"spark.cosmos.container\", \"IoTDeviceInfo\")\\\n",
 					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\n",
 					"    .mode('append')\\\n",
 					"    .save()"
 				],
-				"execution_count": 6
+				"execution_count": 30
 			},
 			{
 				"cell_type": "markdown",
@@ -307,12 +306,12 @@
 					"\n",
 					"create table if not exists CosmosDBIoTDemoDB.IoTSignals\n",
 					"using cosmos.olap\n",
-					"options(spark.synapse.linkedService 'CosmosDBLink',\n",
+					"options(spark.synapse.linkedService 'CosmosDbLink',\n",
 					"        spark.cosmos.container 'IoTSignals');\n",
 					"\n",
 					"create table if not exists CosmosDBIoTDemoDB.IoTDeviceInfo\n",
 					"using cosmos.olap\n",
-					"options(spark.synapse.linkedService 'CosmosDBLink',\n",
+					"options(spark.synapse.linkedService 'CosmosDbLink',\n",
 					"        spark.cosmos.container 'IoTDeviceInfo')\n",
 					""
 				],
@@ -452,7 +451,7 @@
 				"source": [
 					"df_IoTSignals = spark.read\\\n",
 					"                    .format(\"cosmos.olap\")\\\n",
-					"                    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
+					"                    .option(\"spark.synapse.linkedService\", \"CosmosDbLink\")\\\n",
 					"                    .option(\"spark.cosmos.container\", \"IoTSignals\")\\\n",
 					"                    .load()"
 				],
