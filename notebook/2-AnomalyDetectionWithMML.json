@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "19",
 				"spark.dynamicAllocation.maxExecutors": "19",
-				"spark.autotune.trackingId": "471bed98-2439-4213-9bb7-79815a4c7f61"
+				"spark.autotune.trackingId": "8177db6f-f9f9-43d8-9ad0-f76872502493"
 			}
 		},
 		"metadata": {
@@ -109,7 +109,7 @@
 					"# Anomoly Detector Cognitive Service key (retpoc)\n",
 					"Cognitive_Services_Key='feb81b703e864812b9f041e141acd177'"
 				],
-				"execution_count": 11
+				"execution_count": 17
 			},
 			{
 				"cell_type": "markdown",
@@ -147,7 +147,7 @@
 					"                .load()\n",
 					"            )"
 				],
-				"execution_count": 12
+				"execution_count": 18
 			},
 			{
 				"cell_type": "markdown",
@@ -186,7 +186,7 @@
 					"                    .drop(\"timestamp\", \"value\")\n",
 					"                )"
 				],
-				"execution_count": 13
+				"execution_count": 19
 			},
 			{
 				"cell_type": "markdown",
@@ -228,7 +228,7 @@
 					"streamQuery.awaitTermination(180)\n",
 					"streamQuery.stop()"
 				],
-				"execution_count": 15
+				"execution_count": 23
 			},
 			{
 				"cell_type": "markdown",
