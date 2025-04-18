@@ -1,0 +1,10 @@
+{
+	"name": "synapse-ws-sqlOnDemand--ret556lyqbgc73lapocws1",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/41918b4b-7cb5-4e49-a80a-8ef16287837d/resourceGroups/Fabric-Retail-Demo/providers/Microsoft.Synapse/workspaces/ret556lyqbgc73lapocws1",
+		"groupId": "sqlOnDemand",
+		"fqdns": [
+			"ret556lyqbgc73lapocws1-ondemand.007f58b9-a8bd-4378-ab9a-6bc374dab9f7.sql.azuresynapse.net"
+		]
+	}
+}
