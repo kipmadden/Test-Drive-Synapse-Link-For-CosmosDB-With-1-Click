@@ -2,13 +2,13 @@
 	"name": "sparkConfiguration1",
 	"properties": {
 		"configs": {
-			"value": "kip"
+			"spark.authenticate.secret": "https://kvret556lyqbgc73lapoc.vault.azure.net/secrets/adlsAccessKey/62a5c5b08bf84e85adaccc3ad6b98816"
 		},
-		"created": "2025-04-18T13:12:15.7110000-05:00",
+		"created": "2025-04-18T13:27:52.4420000-05:00",
 		"createdBy": "KipM@NeudesicFabric.onmicrosoft.com",
 		"annotations": [],
 		"configMergeRule": {
-			"artifact.currentOperation.value": "replace"
+			"artifact.currentOperation.spark.authenticate.secret": "replace"
 		}
 	}
 }
