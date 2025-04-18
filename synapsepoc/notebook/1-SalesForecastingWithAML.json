@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "77d87ad6-6b81-48f0-b333-40c3a7d3e52a"
+				"spark.autotune.trackingId": "8e9747b8-5502-4246-8b85-37f243fa6f6b"
 			}
 		},
 		"metadata": {
@@ -107,7 +107,7 @@
 					"AMLWssubscription_id='41918b4b-7cb5-4e49-a80a-8ef16287837d'\n",
 					"AMLWsresource_group='ML-SalesForecast-Retail'"
 				],
-				"execution_count": 1
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
