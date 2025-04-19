@@ -12,12 +12,12 @@
 			"driverCores": 8,
 			"executorMemory": "56g",
 			"executorCores": 8,
-			"numExecutors": 2,
+			"numExecutors": 1,
 			"conf": {
-				"spark.dynamicAllocation.enabled": "false",
-				"spark.dynamicAllocation.minExecutors": "2",
-				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "8e9747b8-5502-4246-8b85-37f243fa6f6b"
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "38",
+				"spark.autotune.trackingId": "b7deaadd-454c-436e-811c-1b0459ca2744"
 			}
 		},
 		"metadata": {
@@ -75,6 +75,49 @@
 				]
 			},
 			{
+				"cell_type": "code",
+				"source": [
+					"# ──────────────────────────────────────────────────────────────────────────\n",
+					"# Cell 1 — install & pin all dependencies before any imports\n",
+					"# ──────────────────────────────────────────────────────────────────────────\n",
+					"\n",
+					"# Key Vault client libs\n",
+					"%pip install --quiet azure-keyvault-secrets azure-identity\n",
+					"\n",
+					"# Azure ML SDK v1 for AutoML + core\n",
+					"%pip install --quiet azureml-train-automl azureml-core\n",
+					"\n",
+					"# Pin NumPy to the version AutoML expects\n",
+					"%pip install --quiet \"numpy>=1.16.0,<=1.23.5\"\n",
+					"\n",
+					"# (Optional) any other packages you know you'll need, e.g. pandas, scikit-learn, etc.\n",
+					"# %pip install --quiet pandas scikit-learn\n",
+					""
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"outputs_hidden": true
+					}
+				},
+				"source": [
+					"import os, logging\n",
+					"import pandas as pd\n",
+					"from azureml.core import Workspace, Experiment, Dataset, Environment\n",
+					"from azureml.core.keyvault import Keyvault\n",
+					"from azureml.train.automl import AutoMLConfig\n",
+					"from azure.keyvault.secrets import SecretClient\n",
+					"from azure.identity import DefaultAzureCredential\n",
+					"# …etc…\n",
+					"\n",
+					""
+				],
+				"execution_count": 101
+			},
+			{
 				"cell_type": "markdown",
 				"metadata": {
 					"nteract": {
@@ -103,11 +146,11 @@
 					}
 				},
 				"source": [
-					"AMLWsname='sfr-mlws-dev'\n",
+					"AMLWsname='sfr-mlws-dev01'\n",
 					"AMLWssubscription_id='41918b4b-7cb5-4e49-a80a-8ef16287837d'\n",
 					"AMLWsresource_group='ML-SalesForecast-Retail'"
 				],
-				"execution_count": 3
+				"execution_count": 102
 			},
 			{
 				"cell_type": "markdown",
@@ -124,50 +167,47 @@
 			},
 			{
 				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": true
-				},
 				"source": [
-					"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/Products.csv'\n",
-					"dfProducts = spark.read.csv(path, header=True, inferSchema=True)\n",
-					"dfProducts.write\\\n",
-					"    .format(\"cosmos.oltp\")\\\n",
-					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
-					"    .option(\"spark.cosmos.container\", \"Products\")\\\n",
-					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\n",
-					"    .mode('append')\\\n",
-					"    .save()\n",
 					"\n",
-					"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/RetailSales.csv'\n",
-					"dfRetailSales = spark.read.csv(path, header=True, inferSchema=True)\n",
-					"dfRetailSales.write\\\n",
-					"    .format(\"cosmos.oltp\")\\\n",
-					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
-					"    .option(\"spark.cosmos.container\", \"RetailSales\")\\\n",
-					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\n",
-					"    .mode('append')\\\n",
-					"    .save()\n",
+					"# 1) List of public CSV URLs\n",
+					"urls = [\n",
+					"    \"https://raw.githubusercontent.com/Azure-Samples/Synapse/\"\n",
+					"    \"main/Notebooks/PySpark/Synapse%20Link%20for%20Cosmos%20DB%20samples/\"\n",
+					"    \"Retail/RetailData/Products.csv\",\n",
+					"    \"https://raw.githubusercontent.com/Azure-Samples/Synapse/\"\n",
+					"    \"main/Notebooks/PySpark/Synapse%20Link%20for%20Cosmos%20DB%20samples/\"\n",
+					"    \"Retail/RetailData/RetailSales.csv\",\n",
+					"    \"https://raw.githubusercontent.com/Azure-Samples/Synapse/\"\n",
+					"    \"main/Notebooks/PySpark/Synapse%20Link%20for%20Cosmos%20DB%20samples/\"\n",
+					"    \"Retail/RetailData/StoreDemoGraphics.csv\"\n",
+					"]\n",
 					"\n",
-					"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/StoreDemoGraphics.csv'\n",
-					"dfStoreDemoGraphics = spark.read.csv(path, header=True, inferSchema=True)\n",
-					"dfStoreDemoGraphics.write\\\n",
-					"    .format(\"cosmos.oltp\")\\\n",
-					"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
-					"    .option(\"spark.cosmos.container\", \"StoreDemoGraphics\")\\\n",
-					"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\n",
-					"    .mode('append')\\\n",
-					"    .save()"
+					"for url in urls:\n",
+					"    # 2) Derive 'Products', 'RetailSales', 'StoreDemoGraphics'\n",
+					"    filename = os.path.basename(url)\n",
+					"    container_name = os.path.splitext(filename)[0]\n",
+					"\n",
+					"    print(f\"▶️ Downloading & loading '{filename}'…\")\n",
+					"    pdf = pd.read_csv(url)                   # driver‑side fetch\n",
+					"\n",
+					"    print(f\"✉️ Writing into Cosmos container '{container_name}'…\")\n",
+					"    sdf = spark.createDataFrame(pdf)         # Spark DF\n",
+					"\n",
+					"    (\n",
+					"        sdf.write\n",
+					"           .format(\"cosmos.oltp\")\n",
+					"           .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\n",
+					"           .option(\"spark.cosmos.container\", container_name)\n",
+					"           .option(\"spark.cosmos.write.strategy\", \"ItemOverwrite\")  # uses upsert :contentReference[oaicite:1]{index=1}\n",
+					"           .mode(\"append\")\n",
+					"           .save()\n",
+					"    )\n",
+					"\n",
+					"print(\"✅ All retail datasets ingested into Cosmos.\")\n",
+					"\n",
+					""
 				],
-				"execution_count": 16
+				"execution_count": 103
 			},
 			{
 				"cell_type": "markdown",
@@ -196,22 +236,22 @@
 					"\n",
 					"create table if not exists RetailSalesDB.RetailSales using cosmos.olap options (\n",
 					"    spark.synapse.linkedService 'CosmosDBLink',\n",
-					"    spark.cosmos.preferredRegions 'South Central US',  --Optional, Update If Required\n",
+					"    spark.cosmos.preferredRegions 'East US',  --Optional, Update If Required\n",
 					"    spark.cosmos.container 'RetailSales'\n",
 					");\n",
 					"\n",
 					"create table if not exists RetailSalesDB.StoreDemographics using cosmos.olap options (\n",
 					"    spark.synapse.linkedService 'CosmosDBLink',\n",
-					"    spark.cosmos.preferredRegions 'South Central US', --Optional, Update If Required\n",
+					"    spark.cosmos.preferredRegions 'East US', --Optional, Update If Required\n",
 					"    spark.cosmos.container 'StoreDemoGraphics'\n",
 					");\n",
 					"create table if not exists RetailSalesDB.Product using cosmos.olap options (\n",
 					"    spark.synapse.linkedService 'CosmosDBLink',\n",
-					"    spark.cosmos.preferredRegions 'South Central US', --Optional, Update If Required\n",
+					"    spark.cosmos.preferredRegions 'East US', --Optional, Update If Required\n",
 					"    spark.cosmos.container 'Products'\n",
 					");"
 				],
-				"execution_count": 13
+				"execution_count": 104
 			},
 			{
 				"cell_type": "markdown",
@@ -261,7 +301,7 @@
 					"\n",
 					"display(data)"
 				],
-				"execution_count": 14
+				"execution_count": 105
 			},
 			{
 				"cell_type": "markdown",
@@ -287,50 +327,91 @@
 					"collapsed": true
 				},
 				"source": [
-					"from azureml.core import Workspace\n",
+					"# Only run this the first time to create the workspace\n",
 					"\n",
-					"ws = Workspace.create(name=AMLWsname,\n",
-					"               subscription_id=AMLWssubscription_id,\n",
-					"               resource_group=AMLWsresource_group,\n",
-					"               create_resource_group=True,\n",
-					"               location='South Central US' ## Optional, Update If Required\n",
-					"               )"
+					"# from azureml.core import Workspace\n",
+					"\n",
+					"# ws = Workspace.create(name=AMLWsname,\n",
+					"#                subscription_id=AMLWssubscription_id,\n",
+					"#                resource_group=AMLWsresource_group,\n",
+					"#                create_resource_group=True,\n",
+					"#                location='East US' ## Optional, Update If Required\n",
+					"#                )"
 				],
-				"execution_count": 15
+				"execution_count": 50
 			},
 			{
 				"cell_type": "code",
 				"source": [
-					"import azureml.core\n",
-					"import pandas as pd\n",
-					"import numpy as np\n",
-					"import logging\n",
-					"from azureml.core.workspace import Workspace\n",
-					"from azureml.core import Workspace\n",
-					"from azureml.core.experiment import Experiment\n",
-					"from azureml.train.automl import AutoMLConfig\n",
-					"import os\n",
-					"subscription_id = ws.subscription_id\n",
-					"resource_group = ws.resource_group\n",
-					"workspace_name = ws._workspace_name\n",
-					"workspace_region = 'South Central US' ## Optional, Update If Required\n",
-					"ws = Workspace(subscription_id = subscription_id, resource_group = resource_group, workspace_name = workspace_name)\n",
-					"ws.write_config()\n",
-					"    \n",
-					"experiment_name = 'automl-surfaceforecasting'\n",
-					"experiment = Experiment(ws, experiment_name)\n",
-					"output = {}\n",
-					"output['Subscription ID'] = ws.subscription_id\n",
-					"output['Workspace'] = ws.name\n",
-					"output['SKU'] = ws.sku\n",
-					"output['Resource Group'] = ws.resource_group\n",
-					"output['Location'] = ws.location\n",
-					"output['Run History Name'] = experiment_name\n",
-					"pd.set_option('display.max_colwidth', -1)\n",
-					"outputDf = pd.DataFrame(data = output, index = [''])\n",
-					"outputDf.T"
+					"\n",
+					"# Pull your existing workspace by name / subscription / resource‑group:\n",
+					"ws = Workspace.get(\n",
+					"    name               = AMLWsname,\n",
+					"    subscription_id    = AMLWssubscription_id,\n",
+					"    resource_group     = AMLWsresource_group\n",
+					")\n",
+					"\n",
+					"print(f\"Connected to workspace {ws.name} in {ws.location}\")\n",
+					""
 				],
-				"execution_count": 17
+				"execution_count": 106
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"\n",
+					"\n",
+					"# 1) Get your workspace’s default key vault\n",
+					"kv = Keyvault(workspace=ws)\n",
+					"\n",
+					"# 2) Pull each secret by name\n",
+					"client_id     = kv.get_secret(\"sp-client-id\")\n",
+					"client_secret = kv.get_secret(\"sp-client-secret\")\n",
+					"tenant_id     = kv.get_secret(\"sp-tenant-id\")\n",
+					"\n",
+					"# 3) Populate the env‑vars so DefaultAzureCredential picks them up\n",
+					"os.environ[\"AZURE_CLIENT_ID\"]     = client_id\n",
+					"os.environ[\"AZURE_CLIENT_SECRET\"] = client_secret\n",
+					"os.environ[\"AZURE_TENANT_ID\"]     = tenant_id\n",
+					"\n",
+					"print(\"✅ Loaded SP credentials into environment from Key Vault.\")\n",
+					""
+				],
+				"execution_count": 107
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# import azureml.core\n",
+					"# import pandas as pd\n",
+					"# import numpy as np\n",
+					"# import logging\n",
+					"# from azureml.core.workspace import Workspace\n",
+					"# from azureml.core import Workspace\n",
+					"# from azureml.core.experiment import Experiment\n",
+					"# from azureml.train.automl import AutoMLConfig\n",
+					"# import os\n",
+					"# subscription_id = ws.subscription_id\n",
+					"# resource_group = ws.resource_group\n",
+					"# workspace_name = ws._workspace_name\n",
+					"# workspace_region = 'East US' ## Optional, Update If Required\n",
+					"# ws = Workspace(subscription_id = subscription_id, resource_group = resource_group, workspace_name = workspace_name)\n",
+					"# ws.write_config()\n",
+					"    \n",
+					"# experiment_name = 'automl-surfaceforecasting'\n",
+					"# experiment = Experiment(ws, experiment_name)\n",
+					"# output = {}\n",
+					"# output['Subscription ID'] = ws.subscription_id\n",
+					"# output['Workspace'] = ws.name\n",
+					"# output['SKU'] = ws.sku\n",
+					"# output['Resource Group'] = ws.resource_group\n",
+					"# output['Location'] = ws.location\n",
+					"# output['Run History Name'] = experiment_name\n",
+					"# pd.set_option('display.max_colwidth', None)\n",
+					"# outputDf = pd.DataFrame(data = output, index = [''])\n",
+					"# outputDf.T"
+				],
+				"execution_count": 84
 			},
 			{
 				"cell_type": "markdown",
@@ -398,7 +479,117 @@
 					"from azureml.core.dataset import Dataset\n",
 					"train_dataset = Dataset.Tabular.from_delimited_files(path=datastore.path('dataset/SurfaceSales_train.csv'))"
 				],
-				"execution_count": 18
+				"execution_count": 108
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Create custom environment for the run"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"\n",
+					"time_series_settings = {\n",
+					"    \"time_column_name\":   time_column_name,\n",
+					"    \"grain_column_names\": grain_column_names,\n",
+					"    \"max_horizon\":        n_test_periods\n",
+					"}\n",
+					"\n",
+					"automl_config = AutoMLConfig(\n",
+					"    task=\"forecasting\",\n",
+					"    debug_log=\"automl_ss_sales_errors.log\",\n",
+					"    primary_metric=\"normalized_mean_absolute_error\",\n",
+					"    experiment_timeout_minutes=30,\n",
+					"    training_data=train_dataset,\n",
+					"    label_column_name=target_column_name,\n",
+					"    enable_early_stopping=True,\n",
+					"    n_cross_validations=3,\n",
+					"    iterations=15,\n",
+					"    verbosity=logging.INFO,\n",
+					"    **time_series_settings\n",
+					")\n",
+					"\n",
+					"experiment = Experiment(ws, \"automl-surfaceforecasting\")\n",
+					"run = experiment.submit(automl_config, show_output=True)\n",
+					"run.wait_for_completion(show_output=True)\n",
+					""
+				],
+				"execution_count": 111
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"from azureml.train.automl import AutoMLConfig\n",
+					"from azureml.core import Experiment\n",
+					"import logging\n",
+					"\n",
+					"# Time‑series parameters\n",
+					"time_series_settings = {\n",
+					"    \"time_column_name\":   time_column_name,\n",
+					"    \"grain_column_names\": grain_column_names,\n",
+					"    \"max_horizon\":        n_test_periods\n",
+					"}\n",
+					"\n",
+					"# 1) Build the AutoMLConfig for forecasting\n",
+					"automl_config = AutoMLConfig(\n",
+					"    task=\"forecasting\",\n",
+					"    primary_metric=\"normalized_mean_absolute_error\",\n",
+					"    experiment_timeout_minutes=30,\n",
+					"    training_data=train_dataset,\n",
+					"    label_column_name=target_column_name,\n",
+					"    enable_early_stopping=True,\n",
+					"    n_cross_validations=3,\n",
+					"    iterations=15,\n",
+					"    verbosity=logging.INFO,\n",
+					"    **time_series_settings\n",
+					")\n",
+					"\n",
+					"# 2) Submit the experiment (using the same `ws` you loaded earlier)\n",
+					"experiment = Experiment(ws, \"automl-surfaceforecasting\")\n",
+					"remote_run = experiment.submit(automl_config, show_output=True)\n",
+					"\n",
+					"# (Optional) wait for it to finish and view metrics\n",
+					"remote_run.wait_for_completion(show_output=True)\n",
+					""
+				],
+				"execution_count": 73
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Create the ML Client"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"from azure.identity import DefaultAzureCredential\n",
+					"from azure.ai.ml import MLClient\n",
+					"\n",
+					"# 0) Authenticate via the env‑vars you set (AZURE_CLIENT_ID, SECRET, TENANT)\n",
+					"credential = DefaultAzureCredential()\n",
+					"\n",
+					"# 1) Instantiate the MLClient (reads subscription, RG, WS from config.json)\n",
+					"ml_client = MLClient.from_config(credential)\n",
+					""
+				],
+				"execution_count": 67
 			},
 			{
 				"cell_type": "markdown",
@@ -407,6 +598,54 @@
 					"\n",
 					"Please notice that **compute_target** is commented, meaning that the model training will run locally in Synapse Spark."
 				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"from azure.ai.ml import Input\n",
+					"from azure.ai.ml.automl import ForecastingJob\n",
+					"\n",
+					"# 1) Define your training file as an Input\n",
+					"train_data_input = Input(\n",
+					"    type=\"uri_file\",  # since it’s a flat CSV\n",
+					"    path=\"azureml://datastores/workspaceblobstore/paths/dataset/SurfaceSales_train.csv\"\n",
+					")\n",
+					"\n",
+					"# 2) Build the ForecastingJob\n",
+					"job = ForecastingJob(\n",
+					"    compute=\"cpu-cluster\",\n",
+					"    display_name=\"sales-forecasting\",\n",
+					"    experiment_name=\"automl-surfaceforecasting\",\n",
+					"    training_data=train_data_input,            # <-- use Input here\n",
+					"    target_column_name=\"quantity\",\n",
+					"    primary_metric=\"normalized_mean_absolute_error\"\n",
+					")\n",
+					"\n",
+					"# 3) Time-series settings\n",
+					"job.set_forecast_settings(\n",
+					"    time_column_name=\"weekStarting\",\n",
+					"    forecast_horizon=20,\n",
+					"    time_series_id_column_names=[\"storeId\", \"productCode\"]\n",
+					")\n",
+					"\n",
+					"# 4) Limits (including early stopping)\n",
+					"job.set_limits(\n",
+					"    timeout_minutes=30,\n",
+					"    trial_timeout_minutes=10,\n",
+					"    max_concurrent_trials=2,\n",
+					"    max_trials=15,\n",
+					"    enable_early_termination=True\n",
+					")\n",
+					"\n",
+					"# 5) Training options\n",
+					"#job.set_training()\n",
+					"\n",
+					"# 6) Submit and stream\n",
+					"returned_job = ml_client.jobs.create_or_update(job)\n",
+					"ml_client.jobs.stream(returned_job.name)\n",
+					""
+				],
+				"execution_count": 72
 			},
 			{
 				"cell_type": "code",
@@ -437,7 +676,7 @@
 					"\n",
 					""
 				],
-				"execution_count": 19
+				"execution_count": 66
 			},
 			{
 				"cell_type": "markdown",
