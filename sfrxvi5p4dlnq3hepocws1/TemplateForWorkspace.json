@@ -116,12 +116,12 @@
 					"driverCores": 8,
 					"executorMemory": "56g",
 					"executorCores": 8,
-					"numExecutors": 2,
+					"numExecutors": 1,
 					"conf": {
-						"spark.dynamicAllocation.enabled": "false",
-						"spark.dynamicAllocation.minExecutors": "2",
-						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "67c618b8-53ed-4041-8b03-bb21bdf66cfb"
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "38",
+						"spark.autotune.trackingId": "35a19baa-a8e7-4720-af90-2549bfa215db"
 					}
 				},
 				"metadata": {
@@ -174,10 +174,56 @@
 							}
 						},
 						"source": [
-							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/synapse-cosmosdb.png\" alt=\"Surface Device\" width=\"75%\"/>\r\n",
-							"\r\n",
+							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/synapse-cosmosdb.png\" alt=\"Surface Device\" width=\"75%\"/>\n",
+							"\n",
 							""
 						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"# ──────────────────────────────────────────────────────────────────────────\n",
+							"# Cell 1 — install & pin all dependencies before any imports\n",
+							"# ──────────────────────────────────────────────────────────────────────────\n",
+							"\n",
+							"# Key Vault client libs\n",
+							"%pip install --quiet azure-keyvault-secrets azure-identity\n",
+							"\n",
+							"# Azure ML SDK v1 for AutoML + core\n",
+							"%pip install --quiet azureml-train-automl azureml-core\n",
+							"\n",
+							"# Pin NumPy to the version AutoML expects\n",
+							"%pip install --quiet \"numpy>=1.16.0,<=1.23.5\"\n",
+							"\n",
+							"# (Optional) any other packages you know you'll need, e.g. pandas, scikit-learn, etc.\n",
+							"# %pip install --quiet pandas scikit-learn\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"outputs_hidden": true
+							}
+						},
+						"source": [
+							"import os, logging\n",
+							"import pandas as pd\n",
+							"from azureml.core import Workspace, Experiment, Dataset, Environment\n",
+							"from azureml.core.keyvault import Keyvault\n",
+							"from azureml.train.automl import AutoMLConfig\n",
+							"from azure.keyvault.secrets import SecretClient\n",
+							"from azure.identity import DefaultAzureCredential\n",
+							"# …etc…\n",
+							"\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 101
 					},
 					{
 						"cell_type": "markdown",
@@ -189,8 +235,8 @@
 							}
 						},
 						"source": [
-							"### Replace all \"AML\" placeholders with your own information,Replace subscription_id , resource_group with values before execution\r\n",
-							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/SF_Ws_Variables.gif\" alt=\"Surface Device\" width=\"75%\"/>\r\n",
+							"### Replace all \"AML\" placeholders with your own information,Replace subscription_id , resource_group with values before execution\n",
+							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/SF_Ws_Variables.gif\" alt=\"Surface Device\" width=\"75%\"/>\n",
 							""
 						]
 					},
@@ -208,12 +254,12 @@
 							}
 						},
 						"source": [
-							"AMLWsname='<Name For AML Workspace to be Deployed>'\r\n",
-							"AMLWssubscription_id='<Subscription Id Where AML Workspace will be created, Same Subscription where Package is Deployed>'\r\n",
-							"AMLWsresource_group='<Resource Group Where AML Workspace will be created.Same Resource group where Package is Deployed>'"
+							"AMLWsname='sfr-mlws-dev01'\n",
+							"AMLWssubscription_id='41918b4b-7cb5-4e49-a80a-8ef16287837d'\n",
+							"AMLWsresource_group='ML-SalesForecast-Retail'"
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 102
 					},
 					{
 						"cell_type": "markdown",
@@ -230,51 +276,49 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": true
-						},
+						"metadata": {},
 						"source": [
-							"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/Products.csv'\r\n",
-							"dfProducts = spark.read.csv(path, header=True, inferSchema=True)\r\n",
-							"dfProducts.write\\\r\n",
-							"    .format(\"cosmos.oltp\")\\\r\n",
-							"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\r\n",
-							"    .option(\"spark.cosmos.container\", \"Products\")\\\r\n",
-							"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\r\n",
-							"    .mode('append')\\\r\n",
-							"    .save()\r\n",
-							"\r\n",
-							"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/RetailSales.csv'\r\n",
-							"dfRetailSales = spark.read.csv(path, header=True, inferSchema=True)\r\n",
-							"dfRetailSales.write\\\r\n",
-							"    .format(\"cosmos.oltp\")\\\r\n",
-							"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\r\n",
-							"    .option(\"spark.cosmos.container\", \"RetailSales\")\\\r\n",
-							"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\r\n",
-							"    .mode('append')\\\r\n",
-							"    .save()\r\n",
-							"\r\n",
-							"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/StoreDemoGraphics.csv'\r\n",
-							"dfStoreDemoGraphics = spark.read.csv(path, header=True, inferSchema=True)\r\n",
-							"dfStoreDemoGraphics.write\\\r\n",
-							"    .format(\"cosmos.oltp\")\\\r\n",
-							"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\r\n",
-							"    .option(\"spark.cosmos.container\", \"StoreDemoGraphics\")\\\r\n",
-							"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\r\n",
-							"    .mode('append')\\\r\n",
-							"    .save()"
+							"\n",
+							"# 1) List of public CSV URLs\n",
+							"urls = [\n",
+							"    \"https://raw.githubusercontent.com/Azure-Samples/Synapse/\"\n",
+							"    \"main/Notebooks/PySpark/Synapse%20Link%20for%20Cosmos%20DB%20samples/\"\n",
+							"    \"Retail/RetailData/Products.csv\",\n",
+							"    \"https://raw.githubusercontent.com/Azure-Samples/Synapse/\"\n",
+							"    \"main/Notebooks/PySpark/Synapse%20Link%20for%20Cosmos%20DB%20samples/\"\n",
+							"    \"Retail/RetailData/RetailSales.csv\",\n",
+							"    \"https://raw.githubusercontent.com/Azure-Samples/Synapse/\"\n",
+							"    \"main/Notebooks/PySpark/Synapse%20Link%20for%20Cosmos%20DB%20samples/\"\n",
+							"    \"Retail/RetailData/StoreDemoGraphics.csv\"\n",
+							"]\n",
+							"\n",
+							"for url in urls:\n",
+							"    # 2) Derive 'Products', 'RetailSales', 'StoreDemoGraphics'\n",
+							"    filename = os.path.basename(url)\n",
+							"    container_name = os.path.splitext(filename)[0]\n",
+							"\n",
+							"    print(f\"▶️ Downloading & loading '{filename}'…\")\n",
+							"    pdf = pd.read_csv(url)                   # driver‑side fetch\n",
+							"\n",
+							"    print(f\"✉️ Writing into Cosmos container '{container_name}'…\")\n",
+							"    sdf = spark.createDataFrame(pdf)         # Spark DF\n",
+							"\n",
+							"    (\n",
+							"        sdf.write\n",
+							"           .format(\"cosmos.oltp\")\n",
+							"           .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\n",
+							"           .option(\"spark.cosmos.container\", container_name)\n",
+							"           .option(\"spark.cosmos.write.strategy\", \"ItemOverwrite\")  # uses upsert :contentReference[oaicite:1]{index=1}\n",
+							"           .mode(\"append\")\n",
+							"           .save()\n",
+							"    )\n",
+							"\n",
+							"print(\"✅ All retail datasets ingested into Cosmos.\")\n",
+							"\n",
+							""
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 103
 					},
 					{
 						"cell_type": "markdown",
@@ -303,23 +347,23 @@
 							"\n",
 							"create table if not exists RetailSalesDB.RetailSales using cosmos.olap options (\n",
 							"    spark.synapse.linkedService 'CosmosDBLink',\n",
-							"    spark.cosmos.preferredRegions 'South Central US',  --Optional, Update If Required\n",
+							"    spark.cosmos.preferredRegions 'East US',  --Optional, Update If Required\n",
 							"    spark.cosmos.container 'RetailSales'\n",
 							");\n",
 							"\n",
 							"create table if not exists RetailSalesDB.StoreDemographics using cosmos.olap options (\n",
 							"    spark.synapse.linkedService 'CosmosDBLink',\n",
-							"    spark.cosmos.preferredRegions 'South Central US', --Optional, Update If Required\n",
+							"    spark.cosmos.preferredRegions 'East US', --Optional, Update If Required\n",
 							"    spark.cosmos.container 'StoreDemoGraphics'\n",
 							");\n",
 							"create table if not exists RetailSalesDB.Product using cosmos.olap options (\n",
 							"    spark.synapse.linkedService 'CosmosDBLink',\n",
-							"    spark.cosmos.preferredRegions 'South Central US', --Optional, Update If Required\n",
+							"    spark.cosmos.preferredRegions 'East US', --Optional, Update If Required\n",
 							"    spark.cosmos.container 'Products'\n",
 							");"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 104
 					},
 					{
 						"cell_type": "markdown",
@@ -370,7 +414,7 @@
 							"display(data)"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 105
 					},
 					{
 						"cell_type": "markdown",
@@ -397,53 +441,98 @@
 							"collapsed": true
 						},
 						"source": [
-							"from azureml.core import Workspace\r\n",
-							"\r\n",
-							"ws = Workspace.create(name=AMLWsname,\r\n",
-							"               subscription_id=AMLWssubscription_id,\r\n",
-							"               resource_group=AMLWsresource_group,\r\n",
-							"               create_resource_group=True,\r\n",
-							"               location='South Central US' ## Optional, Update If Required\r\n",
-							"               )"
+							"# Only run this the first time to create the workspace\n",
+							"\n",
+							"# from azureml.core import Workspace\n",
+							"\n",
+							"# ws = Workspace.create(name=AMLWsname,\n",
+							"#                subscription_id=AMLWssubscription_id,\n",
+							"#                resource_group=AMLWsresource_group,\n",
+							"#                create_resource_group=True,\n",
+							"#                location='East US' ## Optional, Update If Required\n",
+							"#                )"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 50
 					},
 					{
 						"cell_type": "code",
 						"metadata": {},
 						"source": [
-							"import azureml.core\n",
-							"import pandas as pd\n",
-							"import numpy as np\n",
-							"import logging\n",
-							"from azureml.core.workspace import Workspace\n",
-							"from azureml.core import Workspace\n",
-							"from azureml.core.experiment import Experiment\n",
-							"from azureml.train.automl import AutoMLConfig\n",
-							"import os\n",
-							"subscription_id = ws.subscription_id\n",
-							"resource_group = ws.resource_group\n",
-							"workspace_name = ws._workspace_name\n",
-							"workspace_region = 'South Central US' ## Optional, Update If Required\n",
-							"ws = Workspace(subscription_id = subscription_id, resource_group = resource_group, workspace_name = workspace_name)\n",
-							"ws.write_config()\n",
-							"    \n",
-							"experiment_name = 'automl-surfaceforecasting'\n",
-							"experiment = Experiment(ws, experiment_name)\n",
-							"output = {}\n",
-							"output['Subscription ID'] = ws.subscription_id\n",
-							"output['Workspace'] = ws.name\n",
-							"output['SKU'] = ws.sku\n",
-							"output['Resource Group'] = ws.resource_group\n",
-							"output['Location'] = ws.location\n",
-							"output['Run History Name'] = experiment_name\n",
-							"pd.set_option('display.max_colwidth', -1)\n",
-							"outputDf = pd.DataFrame(data = output, index = [''])\n",
-							"outputDf.T"
+							"\n",
+							"# Pull your existing workspace by name / subscription / resource‑group:\n",
+							"ws = Workspace.get(\n",
+							"    name               = AMLWsname,\n",
+							"    subscription_id    = AMLWssubscription_id,\n",
+							"    resource_group     = AMLWsresource_group\n",
+							")\n",
+							"\n",
+							"print(f\"Connected to workspace {ws.name} in {ws.location}\")\n",
+							""
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 106
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"\n",
+							"\n",
+							"# 1) Get your workspace’s default key vault\n",
+							"kv = Keyvault(workspace=ws)\n",
+							"\n",
+							"# 2) Pull each secret by name\n",
+							"client_id     = kv.get_secret(\"sp-client-id\")\n",
+							"client_secret = kv.get_secret(\"sp-client-secret\")\n",
+							"tenant_id     = kv.get_secret(\"sp-tenant-id\")\n",
+							"\n",
+							"# 3) Populate the env‑vars so DefaultAzureCredential picks them up\n",
+							"os.environ[\"AZURE_CLIENT_ID\"]     = client_id\n",
+							"os.environ[\"AZURE_CLIENT_SECRET\"] = client_secret\n",
+							"os.environ[\"AZURE_TENANT_ID\"]     = tenant_id\n",
+							"\n",
+							"print(\"✅ Loaded SP credentials into environment from Key Vault.\")\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 107
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"# import azureml.core\n",
+							"# import pandas as pd\n",
+							"# import numpy as np\n",
+							"# import logging\n",
+							"# from azureml.core.workspace import Workspace\n",
+							"# from azureml.core import Workspace\n",
+							"# from azureml.core.experiment import Experiment\n",
+							"# from azureml.train.automl import AutoMLConfig\n",
+							"# import os\n",
+							"# subscription_id = ws.subscription_id\n",
+							"# resource_group = ws.resource_group\n",
+							"# workspace_name = ws._workspace_name\n",
+							"# workspace_region = 'East US' ## Optional, Update If Required\n",
+							"# ws = Workspace(subscription_id = subscription_id, resource_group = resource_group, workspace_name = workspace_name)\n",
+							"# ws.write_config()\n",
+							"    \n",
+							"# experiment_name = 'automl-surfaceforecasting'\n",
+							"# experiment = Experiment(ws, experiment_name)\n",
+							"# output = {}\n",
+							"# output['Subscription ID'] = ws.subscription_id\n",
+							"# output['Workspace'] = ws.name\n",
+							"# output['SKU'] = ws.sku\n",
+							"# output['Resource Group'] = ws.resource_group\n",
+							"# output['Location'] = ws.location\n",
+							"# output['Run History Name'] = experiment_name\n",
+							"# pd.set_option('display.max_colwidth', None)\n",
+							"# outputDf = pd.DataFrame(data = output, index = [''])\n",
+							"# outputDf.T"
+						],
+						"outputs": [],
+						"execution_count": 84
 					},
 					{
 						"cell_type": "markdown",
@@ -514,7 +603,123 @@
 							"train_dataset = Dataset.Tabular.from_delimited_files(path=datastore.path('dataset/SurfaceSales_train.csv'))"
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 108
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Create custom environment for the run"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"\n",
+							"time_series_settings = {\n",
+							"    \"time_column_name\":   time_column_name,\n",
+							"    \"grain_column_names\": grain_column_names,\n",
+							"    \"max_horizon\":        n_test_periods\n",
+							"}\n",
+							"\n",
+							"automl_config = AutoMLConfig(\n",
+							"    task=\"forecasting\",\n",
+							"    debug_log=\"automl_ss_sales_errors.log\",\n",
+							"    primary_metric=\"normalized_mean_absolute_error\",\n",
+							"    experiment_timeout_minutes=30,\n",
+							"    training_data=train_dataset,\n",
+							"    label_column_name=target_column_name,\n",
+							"    enable_early_stopping=True,\n",
+							"    n_cross_validations=3,\n",
+							"    iterations=15,\n",
+							"    verbosity=logging.INFO,\n",
+							"    **time_series_settings\n",
+							")\n",
+							"\n",
+							"experiment = Experiment(ws, \"automl-surfaceforecasting\")\n",
+							"run = experiment.submit(automl_config, show_output=True)\n",
+							"run.wait_for_completion(show_output=True)\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 111
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"from azureml.train.automl import AutoMLConfig\n",
+							"from azureml.core import Experiment\n",
+							"import logging\n",
+							"\n",
+							"# Time‑series parameters\n",
+							"time_series_settings = {\n",
+							"    \"time_column_name\":   time_column_name,\n",
+							"    \"grain_column_names\": grain_column_names,\n",
+							"    \"max_horizon\":        n_test_periods\n",
+							"}\n",
+							"\n",
+							"# 1) Build the AutoMLConfig for forecasting\n",
+							"automl_config = AutoMLConfig(\n",
+							"    task=\"forecasting\",\n",
+							"    primary_metric=\"normalized_mean_absolute_error\",\n",
+							"    experiment_timeout_minutes=30,\n",
+							"    training_data=train_dataset,\n",
+							"    label_column_name=target_column_name,\n",
+							"    enable_early_stopping=True,\n",
+							"    n_cross_validations=3,\n",
+							"    iterations=15,\n",
+							"    verbosity=logging.INFO,\n",
+							"    **time_series_settings\n",
+							")\n",
+							"\n",
+							"# 2) Submit the experiment (using the same `ws` you loaded earlier)\n",
+							"experiment = Experiment(ws, \"automl-surfaceforecasting\")\n",
+							"remote_run = experiment.submit(automl_config, show_output=True)\n",
+							"\n",
+							"# (Optional) wait for it to finish and view metrics\n",
+							"remote_run.wait_for_completion(show_output=True)\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 73
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Create the ML Client"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"from azure.identity import DefaultAzureCredential\n",
+							"from azure.ai.ml import MLClient\n",
+							"\n",
+							"# 0) Authenticate via the env‑vars you set (AZURE_CLIENT_ID, SECRET, TENANT)\n",
+							"credential = DefaultAzureCredential()\n",
+							"\n",
+							"# 1) Instantiate the MLClient (reads subscription, RG, WS from config.json)\n",
+							"ml_client = MLClient.from_config(credential)\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 67
 					},
 					{
 						"cell_type": "markdown",
@@ -524,6 +729,56 @@
 							"\n",
 							"Please notice that **compute_target** is commented, meaning that the model training will run locally in Synapse Spark."
 						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"from azure.ai.ml import Input\n",
+							"from azure.ai.ml.automl import ForecastingJob\n",
+							"\n",
+							"# 1) Define your training file as an Input\n",
+							"train_data_input = Input(\n",
+							"    type=\"uri_file\",  # since it’s a flat CSV\n",
+							"    path=\"azureml://datastores/workspaceblobstore/paths/dataset/SurfaceSales_train.csv\"\n",
+							")\n",
+							"\n",
+							"# 2) Build the ForecastingJob\n",
+							"job = ForecastingJob(\n",
+							"    compute=\"cpu-cluster\",\n",
+							"    display_name=\"sales-forecasting\",\n",
+							"    experiment_name=\"automl-surfaceforecasting\",\n",
+							"    training_data=train_data_input,            # <-- use Input here\n",
+							"    target_column_name=\"quantity\",\n",
+							"    primary_metric=\"normalized_mean_absolute_error\"\n",
+							")\n",
+							"\n",
+							"# 3) Time-series settings\n",
+							"job.set_forecast_settings(\n",
+							"    time_column_name=\"weekStarting\",\n",
+							"    forecast_horizon=20,\n",
+							"    time_series_id_column_names=[\"storeId\", \"productCode\"]\n",
+							")\n",
+							"\n",
+							"# 4) Limits (including early stopping)\n",
+							"job.set_limits(\n",
+							"    timeout_minutes=30,\n",
+							"    trial_timeout_minutes=10,\n",
+							"    max_concurrent_trials=2,\n",
+							"    max_trials=15,\n",
+							"    enable_early_termination=True\n",
+							")\n",
+							"\n",
+							"# 5) Training options\n",
+							"#job.set_training()\n",
+							"\n",
+							"# 6) Submit and stream\n",
+							"returned_job = ml_client.jobs.create_or_update(job)\n",
+							"ml_client.jobs.stream(returned_job.name)\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 72
 					},
 					{
 						"cell_type": "code",
@@ -556,7 +811,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 19
+						"execution_count": 66
 					},
 					{
 						"cell_type": "markdown",
@@ -710,7 +965,8 @@
 					"conf": {
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "19",
-						"spark.dynamicAllocation.maxExecutors": "19"
+						"spark.dynamicAllocation.maxExecutors": "19",
+						"spark.autotune.trackingId": "5d01f62a-3816-4660-801d-0d961e4b45d0"
 					}
 				},
 				"metadata": {
@@ -724,24 +980,26 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/4eeedd72-d937-4243-86d1-c3982a84d924/resourceGroups/nashahz1007-02/providers/Microsoft.Synapse/workspaces/navzhtz6rgwnfydapocws1/bigDataPools/ws1sparkpool1",
+						"id": "/subscriptions/41918b4b-7cb5-4e49-a80a-8ef16287837d/resourceGroups/ML-SalesForecast-Retail/providers/Microsoft.Synapse/workspaces/sfrxvi5p4dlnq3hepocws1/bigDataPools/ws1sparkpool1",
 						"name": "ws1sparkpool1",
 						"type": "Spark",
-						"endpoint": "https://navzhtz6rgwnfydapocws1.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/ws1sparkpool1",
+						"endpoint": "https://sfrxvi5p4dlnq3hepocws1.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/ws1sparkpool1",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
 						},
-						"sparkVersion": "2.4",
+						"sparkVersion": "3.4",
 						"nodeCount": 5,
 						"cores": 8,
-						"memory": 56
+						"memory": 56,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"# Leverage Power of Azure Synapse Link for Cosmos DB and Spark SQL\n",
 							"With Synapse Link, you can now directly connect to your Azure Cosmos DB containers from Azure Synapse Analytics and access the analytical store with no separate connectors. This notebook scenario is to \n",
@@ -764,8 +1022,8 @@
 							}
 						},
 						"source": [
-							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/synapse-cosmosdb.png\" alt=\"Surface Device\" width=\"75%\"/>\r\n",
-							"\r\n",
+							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/synapse-cosmosdb.png\" alt=\"Surface Device\" width=\"75%\"/>\n",
+							"\n",
 							""
 						]
 					},
@@ -779,8 +1037,8 @@
 							}
 						},
 						"source": [
-							"### Replace the Cognitive Services API account Keys below before execution.Keys can be found under \"Keys and Endpoints\" Section\r\n",
-							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/AD_Ws_Varriables.gif\" alt=\"Surface Device\" width=\"75%\"/>\r\n",
+							"### Replace the Cognitive Services API account Keys below before execution.Keys can be found under \"Keys and Endpoints\" Section\n",
+							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/AD_Ws_Varriables.gif\" alt=\"Surface Device\" width=\"75%\"/>\n",
 							""
 						]
 					},
@@ -798,10 +1056,10 @@
 							}
 						},
 						"source": [
-							"Cognitive_Services_Key='<Cognitive Services Account Key>'"
+							"Cognitive_Services_Key='d2697b0a802b45bea7c8c8969320daa1'"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 21
 					},
 					{
 						"cell_type": "markdown",
@@ -813,7 +1071,7 @@
 							}
 						},
 						"source": [
-							"## Simulate Streaming Data Generation using Rate Streaming Source\r\n",
+							"## Simulate Streaming Data Generation using Rate Streaming Source\n",
 							"The Rate streaming source is used to simplify the solution here and can be replaced with any supported streaming sources such as Azure Event Hubs and Apache Kafka."
 						]
 					},
@@ -832,15 +1090,15 @@
 							"collapsed": true
 						},
 						"source": [
-							"dfStream = (spark\r\n",
-							"                .readStream\r\n",
-							"                .format(\"rate\")\r\n",
-							"                .option(\"rowsPerSecond\", 10)\r\n",
-							"                .load()\r\n",
+							"dfStream = (spark\n",
+							"                .readStream\n",
+							"                .format(\"rate\")\n",
+							"                .option(\"rowsPerSecond\", 10)\n",
+							"                .load()\n",
 							"            )"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 22
 					},
 					{
 						"cell_type": "markdown",
@@ -880,7 +1138,7 @@
 							"                )"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 23
 					},
 					{
 						"cell_type": "markdown",
@@ -892,38 +1150,34 @@
 							}
 						},
 						"source": [
-							"## Stream Writes to the Azure Cosmos DB Collection\r\n",
+							"## Stream Writes to the Azure Cosmos DB Collection\n",
 							"The \"cosmos.oltp\" is the Spark format that enables connection to the Cosmos DB Transactional store."
 						]
 					},
 					{
 						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
+						"metadata": {},
 						"source": [
-							"streamQuery = dfIoTSignals\\\r\n",
-							"                    .writeStream\\\r\n",
-							"                    .format(\"cosmos.oltp\")\\\r\n",
-							"                    .outputMode(\"append\")\\\r\n",
-							"                    .option(\"spark.cosmos.connection.mode\", \"gateway\") \\\r\n",
-							"                    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\r\n",
-							"                    .option(\"spark.cosmos.container\", \"IoTSignals\")\\\r\n",
-							"                    .option(\"checkpointLocation\", \"/writeCheckpointDir\")\\\r\n",
-							"                    .start()\r\n",
-							"streamQuery.awaitTermination(180)\r\n",
-							"streamQuery.stop()"
+							"# Stream IoTSignals into Cosmos DB via Synapse Link\n",
+							"streamQuery = (\n",
+							"    dfIoTSignals\n",
+							"      .writeStream\n",
+							"      .format(\"cosmos.oltp\")\n",
+							"      .outputMode(\"append\")\n",
+							"      .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\n",
+							"      .option(\"spark.cosmos.container\", \"IoTSignals\")\n",
+							"      .option(\"spark.cosmos.write.strategy\", \"ItemOverwrite\")  # performs upsert \n",
+							"      .option(\"checkpointLocation\", \"/writeCheckpointDir\")\n",
+							"      .start()\n",
+							")\n",
+							"\n",
+							"# Let it run for up to 3 minutes, then stop\n",
+							"streamQuery.awaitTermination(180)\n",
+							"streamQuery.stop()\n",
+							""
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 24
 					},
 					{
 						"cell_type": "markdown",
@@ -935,36 +1189,51 @@
 							}
 						},
 						"source": [
-							"## Load the IoTDeviceInfo Dataset from ADLS Gen2 to a Dataframe and Write the Dataframe to the Azure Cosmos DB Collection\r\n",
+							"## Load the IoTDeviceInfo Dataset from ADLS Gen2 to a Dataframe and Write the Dataframe to the Azure Cosmos DB Collection\n",
 							""
 						]
 					},
 					{
 						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
+						"metadata": {},
 						"source": [
-							"path = 'wasbs://cosmolnksynp@synapse1poc.blob.core.windows.net/cosmolnksynp/IoTDeviceInfo.csv'\r\n",
-							"dfDeviceInfo = spark.read.csv(path, header=True, inferSchema=True)\r\n",
-							"dfDeviceInfo.write\\\r\n",
-							"    .format(\"cosmos.oltp\")\\\r\n",
-							"    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\r\n",
-							"    .option(\"spark.cosmos.container\", \"IoTDeviceInfo\")\\\r\n",
-							"    .option(\"spark.cosmos.write.upsertEnabled\", \"true\")\\\r\n",
-							"    .mode('append')\\\r\n",
-							"    .save()"
+							"import pandas as pd\n",
+							"from pyspark.sql.functions import col\n",
+							"\n",
+							"# 1) Pull IoTDeviceInfo into pandas\n",
+							"url = (\n",
+							"    \"https://raw.githubusercontent.com/Azure-Samples/Synapse/\"\n",
+							"    \"main/Notebooks/PySpark/Synapse%20Link%20for%20Cosmos%20DB%20samples/\"\n",
+							"    \"IoT/IoTData/IoTDeviceInfo.csv\"\n",
+							")\n",
+							"print(\"▶️ Downloading IoTDeviceInfo.csv…\")\n",
+							"pdf = pd.read_csv(url)\n",
+							"\n",
+							"# 2) Convert to Spark DF and add an 'id' column from 'deviceid'\n",
+							"sdf = (\n",
+							"    spark\n",
+							"      .createDataFrame(pdf)\n",
+							"      .withColumn(\"id\", col(\"deviceid\").cast(\"string\"))\n",
+							")\n",
+							"\n",
+							"# 3) Write into Cosmos with upsert strategy\n",
+							"print(\"✉️ Writing into Cosmos container 'IoTDeviceInfo'…\")\n",
+							"(\n",
+							"    sdf.write\n",
+							"       .format(\"cosmos.oltp\")\n",
+							"       .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\n",
+							"       .option(\"spark.cosmos.container\", \"IoTDeviceInfo\")\n",
+							"       .option(\"spark.cosmos.write.strategy\", \"ItemOverwrite\")  # upsert\n",
+							"       .mode(\"append\")\n",
+							"       .save()\n",
+							")\n",
+							"\n",
+							"print(\"✅ IoTDeviceInfo ingested successfully.\")\n",
+							"\n",
+							""
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 25
 					},
 					{
 						"cell_type": "markdown",
@@ -976,7 +1245,7 @@
 							}
 						},
 						"source": [
-							"## Create Spark Tables Pointing to the Azure Cosmos DB Analytical Store Collections using Azure Synapse Link\r\n",
+							"## Create Spark Tables Pointing to the Azure Cosmos DB Analytical Store Collections using Azure Synapse Link\n",
 							""
 						]
 					},
@@ -998,22 +1267,22 @@
 							"collapsed": false
 						},
 						"source": [
-							"%%sql\r\n",
-							"create database if not exists CosmosDBIoTDemoDB;\r\n",
-							"\r\n",
-							"create table if not exists CosmosDBIoTDemoDB.IoTSignals\r\n",
-							"using cosmos.olap\r\n",
-							"options(spark.synapse.linkedService 'CosmosDBLink',\r\n",
-							"        spark.cosmos.container 'IoTSignals');\r\n",
-							"\r\n",
-							"create table if not exists CosmosDBIoTDemoDB.IoTDeviceInfo\r\n",
-							"using cosmos.olap\r\n",
-							"options(spark.synapse.linkedService 'CosmosDBLink',\r\n",
-							"        spark.cosmos.container 'IoTDeviceInfo')\r\n",
+							"%%sql\n",
+							"create database if not exists CosmosDBIoTDemoDB;\n",
+							"\n",
+							"create table if not exists CosmosDBIoTDemoDB.IoTSignals\n",
+							"using cosmos.olap\n",
+							"options(spark.synapse.linkedService 'CosmosDBLink',\n",
+							"        spark.cosmos.container 'IoTSignals');\n",
+							"\n",
+							"create table if not exists CosmosDBIoTDemoDB.IoTDeviceInfo\n",
+							"using cosmos.olap\n",
+							"options(spark.synapse.linkedService 'CosmosDBLink',\n",
+							"        spark.cosmos.container 'IoTDeviceInfo')\n",
 							""
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 26
 					},
 					{
 						"cell_type": "markdown",
@@ -1043,25 +1312,25 @@
 							"collapsed": false
 						},
 						"source": [
-							"df_RPM_details = spark.sql(\"select a.deviceid \\\r\n",
-							"                                 , b.devicetype \\\r\n",
-							"                                 , cast(b.location as string) as location\\\r\n",
-							"                                 , cast(b.latitude as float) as latitude\\\r\n",
-							"                                 , cast(b.longitude as float) as  longitude\\\r\n",
-							"                                 , a.measuretype \\\r\n",
-							"                                 , a.unitSymbol \\\r\n",
-							"                                 , cast(sum(measureValue) as float) as measureValueSum \\\r\n",
-							"                                 , count(*) as count \\\r\n",
-							"                            from CosmosDBIoTDemoDB.IoTSignals a \\\r\n",
-							"                            left join CosmosDBIoTDemoDB.IoTDeviceInfo b \\\r\n",
-							"                            on a.deviceid = b.deviceid \\\r\n",
-							"                            where a.unitSymbol = 'RPM' \\\r\n",
-							"                            group by a.deviceid, b.devicetype, b.location, b.latitude, b.longitude, a.measuretype, a.unitSymbol\")\r\n",
-							"\r\n",
+							"df_RPM_details = spark.sql(\"select a.deviceid \\\n",
+							"                                 , b.devicetype \\\n",
+							"                                 , cast(b.location as string) as location\\\n",
+							"                                 , cast(b.latitude as float) as latitude\\\n",
+							"                                 , cast(b.longitude as float) as  longitude\\\n",
+							"                                 , a.measuretype \\\n",
+							"                                 , a.unitSymbol \\\n",
+							"                                 , cast(sum(measureValue) as float) as measureValueSum \\\n",
+							"                                 , count(*) as count \\\n",
+							"                            from CosmosDBIoTDemoDB.IoTSignals a \\\n",
+							"                            left join CosmosDBIoTDemoDB.IoTDeviceInfo b \\\n",
+							"                            on a.deviceid = b.deviceid \\\n",
+							"                            where a.unitSymbol = 'RPM' \\\n",
+							"                            group by a.deviceid, b.devicetype, b.location, b.latitude, b.longitude, a.measuretype, a.unitSymbol\")\n",
+							"\n",
 							"display(df_RPM_details)"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 27
 					},
 					{
 						"cell_type": "markdown",
@@ -1073,11 +1342,11 @@
 							}
 						},
 						"source": [
-							"## Visualizations using Plotly and DisplayHTML()\r\n",
-							"Heatmap of IoT signals across diffrent locations\r\n",
-							"\r\n",
-							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/HeatMaPlot.png\" alt=\"Chart\" width=\"75%\"/>\r\n",
-							"\r\n",
+							"## Visualizations using Plotly and DisplayHTML()\n",
+							"Heatmap of IoT signals across diffrent locations\n",
+							"\n",
+							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/HeatMaPlot.png\" alt=\"Chart\" width=\"75%\"/>\n",
+							"\n",
 							""
 						]
 					},
@@ -1095,31 +1364,31 @@
 							}
 						},
 						"source": [
-							"from plotly.offline import plot\r\n",
-							"import plotly.express as px\r\n",
-							"\r\n",
-							"df_RPM_details_pd = df_RPM_details.toPandas()\r\n",
-							"fig = px.scatter_mapbox(df_RPM_details_pd, \r\n",
-							"                        lat='latitude', \r\n",
-							"                        lon='longitude', \r\n",
-							"                        size = 'measureValueSum',\r\n",
-							"                        color = 'measureValueSum',\r\n",
-							"                        hover_name = 'location',\r\n",
-							"                        hover_data = ['measureValueSum','location'],\r\n",
-							"                        size_max = 30,\r\n",
-							"                        color_continuous_scale = px.colors.carto.Temps,\r\n",
-							"                        zoom=3,\r\n",
-							"                        height=600,\r\n",
-							"                        width =900)\r\n",
-							"\r\n",
-							"fig.update_layout(mapbox_style='open-street-map')\r\n",
-							"fig.update_layout(margin={\"r\":0,\"t\":0,\"l\":0,\"b\":0})\r\n",
-							"\r\n",
-							"p = plot(fig,output_type='div')\r\n",
+							"from plotly.offline import plot\n",
+							"import plotly.express as px\n",
+							"\n",
+							"df_RPM_details_pd = df_RPM_details.toPandas()\n",
+							"fig = px.scatter_mapbox(df_RPM_details_pd, \n",
+							"                        lat='latitude', \n",
+							"                        lon='longitude', \n",
+							"                        size = 'measureValueSum',\n",
+							"                        color = 'measureValueSum',\n",
+							"                        hover_name = 'location',\n",
+							"                        hover_data = ['measureValueSum','location'],\n",
+							"                        size_max = 30,\n",
+							"                        color_continuous_scale = px.colors.carto.Temps,\n",
+							"                        zoom=3,\n",
+							"                        height=600,\n",
+							"                        width =900)\n",
+							"\n",
+							"fig.update_layout(mapbox_style='open-street-map')\n",
+							"fig.update_layout(margin={\"r\":0,\"t\":0,\"l\":0,\"b\":0})\n",
+							"\n",
+							"p = plot(fig,output_type='div')\n",
 							"displayHTML(p)"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 28
 					},
 					{
 						"cell_type": "markdown",
@@ -1149,14 +1418,14 @@
 							"collapsed": true
 						},
 						"source": [
-							"df_IoTSignals = spark.read\\\r\n",
-							"                    .format(\"cosmos.olap\")\\\r\n",
-							"                    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\r\n",
-							"                    .option(\"spark.cosmos.container\", \"IoTSignals\")\\\r\n",
+							"df_IoTSignals = spark.read\\\n",
+							"                    .format(\"cosmos.olap\")\\\n",
+							"                    .option(\"spark.synapse.linkedService\", \"CosmosDBLink\")\\\n",
+							"                    .option(\"spark.cosmos.container\", \"IoTSignals\")\\\n",
 							"                    .load()"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 29
 					},
 					{
 						"cell_type": "markdown",
@@ -1168,9 +1437,9 @@
 							}
 						},
 						"source": [
-							"## Data Exploration using Pyplot\r\n",
-							"\r\n",
-							"\r\n",
+							"## Data Exploration using Pyplot\n",
+							"\n",
+							"\n",
 							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/DataExPlot.png\" alt=\"Chart\" width=\"75%\"/>"
 						]
 					},
@@ -1188,24 +1457,24 @@
 							}
 						},
 						"source": [
-							"import pandas as pd\r\n",
-							"import matplotlib.pyplot as plt\r\n",
-							"\r\n",
-							"df_IoTSignals_pd = df_IoTSignals.toPandas().dropna()\r\n",
-							"df_IoTSignals_pd['measureValue'] = df_IoTSignals_pd['measureValue'].astype(int)\r\n",
-							"\r\n",
-							"df_MW = df_IoTSignals_pd[(df_IoTSignals_pd['deviceId'] == 'dev-1') & (df_IoTSignals_pd['unitSymbol'] == 'MW')]\r\n",
-							"df_MW.plot(x='dateTime', y='measureValue', color='green', figsize=(20,5), label = 'Output MW')\r\n",
-							"plt.title('MW TimeSeries')\r\n",
-							"plt.show()\r\n",
-							"\r\n",
-							"df_RPM = df_IoTSignals_pd[(df_IoTSignals_pd['deviceId'] == 'dev-1') & (df_IoTSignals_pd['unitSymbol'] == 'RPM')]\r\n",
-							"df_RPM.plot(x='dateTime', y='measureValue', color='black', figsize=(20,5), label = 'Output RPM')\r\n",
-							"plt.title('RPM TimeSeries')\r\n",
+							"import pandas as pd\n",
+							"import matplotlib.pyplot as plt\n",
+							"\n",
+							"df_IoTSignals_pd = df_IoTSignals.toPandas().dropna()\n",
+							"df_IoTSignals_pd['measureValue'] = df_IoTSignals_pd['measureValue'].astype(int)\n",
+							"\n",
+							"df_MW = df_IoTSignals_pd[(df_IoTSignals_pd['deviceId'] == 'dev-1') & (df_IoTSignals_pd['unitSymbol'] == 'MW')]\n",
+							"df_MW.plot(x='dateTime', y='measureValue', color='green', figsize=(20,5), label = 'Output MW')\n",
+							"plt.title('MW TimeSeries')\n",
+							"plt.show()\n",
+							"\n",
+							"df_RPM = df_IoTSignals_pd[(df_IoTSignals_pd['deviceId'] == 'dev-1') & (df_IoTSignals_pd['unitSymbol'] == 'RPM')]\n",
+							"df_RPM.plot(x='dateTime', y='measureValue', color='black', figsize=(20,5), label = 'Output RPM')\n",
+							"plt.title('RPM TimeSeries')\n",
 							"plt.show()"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 30
 					},
 					{
 						"cell_type": "markdown",
@@ -1222,31 +1491,71 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from pyspark.sql.functions import col\n",
-							"from pyspark.sql.types import *\n",
-							"from mmlspark.cognitive import SimpleDetectAnomalies\n",
-							"from mmlspark.core.spark import FluentAPI\n",
+							"from synapse.ml.services.anomaly import SimpleDetectAnomalies\n",
 							"\n",
-							"anomaly_detector = (SimpleDetectAnomalies()\n",
-							"                            .setSubscriptionKey(Cognitive_Services_Key)\n",
-							"                            .setLocation('southcentralus') ##Optional, Update If Required\n",
-							"                            .setOutputCol(\"anomalies\")\n",
-							"                            .setGroupbyCol(\"grouping\")\n",
-							"                            .setSensitivity(95)\n",
-							"                            .setGranularity(\"secondly\"))\n",
+							"# 1) Configure the anomaly detector (uses synapse.ml.services, not mmlspark)\n",
+							"anomaly_detector = (\n",
+							"    SimpleDetectAnomalies()\n",
+							"      .setSubscriptionKey(Cognitive_Services_Key)\n",
+							"      .setLocation(\"southcentralus\")  # adjust if needed\n",
+							"      .setOutputCol(\"anomalies\")\n",
+							"      .setGroupbyCol(\"grouping\")\n",
+							"      .setSensitivity(95)\n",
+							"      .setGranularity(\"secondly\")\n",
+							")\n",
 							"\n",
-							"df_anomaly = (df_IoTSignals\n",
-							"                    .where(col(\"unitSymbol\") == 'RPM')\n",
-							"                    .withColumnRenamed(\"dateTime\", \"timestamp\")\n",
-							"                    .withColumn(\"value\", col(\"measureValue\").cast(\"double\"))\n",
-							"                    .withColumn(\"grouping\", col(\"deviceId\"))\n",
-							"                    .mlTransform(anomaly_detector))\n",
+							"# 2) Prepare your signal DataFrame\n",
+							"signals_df = (\n",
+							"    df_IoTSignals\n",
+							"      .where(col(\"unitSymbol\") == \"RPM\")\n",
+							"      .withColumnRenamed(\"dateTime\", \"timestamp\")\n",
+							"      .withColumn(\"value\", col(\"measureValue\").cast(\"double\"))\n",
+							"      .withColumn(\"grouping\", col(\"deviceId\"))\n",
+							")\n",
 							"\n",
-							"df_anomaly.createOrReplaceTempView('df_anomaly')"
+							"# 3) Run the detector\n",
+							"df_anomaly = anomaly_detector.transform(signals_df)\n",
+							"\n",
+							"# 4) Register for SQL queries\n",
+							"df_anomaly.createOrReplaceTempView(\"df_anomaly\")\n",
+							"\n",
+							"print(\"▶️ Anomaly detection complete; temp view 'df_anomaly' is ready.\")\n",
+							""
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 31
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"# from pyspark.sql.functions import col\n",
+							"# from pyspark.sql.types import *\n",
+							"# from mmlspark.cognitive import SimpleDetectAnomalies\n",
+							"# from mmlspark.core.spark import FluentAPI\n",
+							"\n",
+							"# anomaly_detector = (SimpleDetectAnomalies()\n",
+							"#                             .setSubscriptionKey(Cognitive_Services_Key)\n",
+							"#                             .setLocation('southcentralus') ##Optional, Update If Required\n",
+							"#                             .setOutputCol(\"anomalies\")\n",
+							"#                             .setGroupbyCol(\"grouping\")\n",
+							"#                             .setSensitivity(95)\n",
+							"#                             .setGranularity(\"secondly\"))\n",
+							"\n",
+							"# df_anomaly = (df_IoTSignals\n",
+							"#                     .where(col(\"unitSymbol\") == 'RPM')\n",
+							"#                     .withColumnRenamed(\"dateTime\", \"timestamp\")\n",
+							"#                     .withColumn(\"value\", col(\"measureValue\").cast(\"double\"))\n",
+							"#                     .withColumn(\"grouping\", col(\"deviceId\"))\n",
+							"#                     .mlTransform(anomaly_detector))\n",
+							"\n",
+							"# df_anomaly.createOrReplaceTempView('df_anomaly')"
+						],
+						"outputs": [],
+						"execution_count": 32
 					},
 					{
 						"cell_type": "code",
@@ -1266,7 +1575,7 @@
 							"display(df_anomaly)"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 33
 					},
 					{
 						"cell_type": "markdown",
@@ -1278,7 +1587,7 @@
 							}
 						},
 						"source": [
-							"## Format the Dataframe for Visualization\r\n",
+							"## Format the Dataframe for Visualization\n",
 							""
 						]
 					},
@@ -1297,21 +1606,21 @@
 							"collapsed": false
 						},
 						"source": [
-							"df_anomaly_single_device = spark.sql(\"select timestamp \\\r\n",
-							"                                            , measureValue \\\r\n",
-							"                                            , anomalies.expectedValue \\\r\n",
-							"                                            , anomalies.expectedValue + anomalies.upperMargin as expectedUpperValue \\\r\n",
-							"                                            , anomalies.expectedValue - anomalies.lowerMargin as expectedLowerValue \\\r\n",
-							"                                            , case when anomalies.isAnomaly=true then 1 else 0 end as isAnomaly \\\r\n",
-							"                                        from df_anomaly \\\r\n",
-							"                                        where deviceid = 'dev-1' \\\r\n",
-							"                                        order by timestamp \\\r\n",
-							"                                        limit 400\")\r\n",
-							"\r\n",
+							"df_anomaly_single_device = spark.sql(\"select timestamp \\\n",
+							"                                            , measureValue \\\n",
+							"                                            , anomalies.expectedValue \\\n",
+							"                                            , anomalies.expectedValue + anomalies.upperMargin as expectedUpperValue \\\n",
+							"                                            , anomalies.expectedValue - anomalies.lowerMargin as expectedLowerValue \\\n",
+							"                                            , case when anomalies.isAnomaly=true then 1 else 0 end as isAnomaly \\\n",
+							"                                        from df_anomaly \\\n",
+							"                                        where deviceid = 'dev-1' \\\n",
+							"                                        order by timestamp \\\n",
+							"                                        limit 400\")\n",
+							"\n",
 							"display(df_anomaly_single_device)"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 34
 					},
 					{
 						"cell_type": "markdown",
@@ -1323,50 +1632,81 @@
 							}
 						},
 						"source": [
-							"## Visualize the Anomalies using Plotly\r\n",
-							"Plot Expected value, Upper Value, Lower Value and Actual Value along with Anomaly flag\r\n",
-							"\r\n",
-							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/AnmaliesPlot.png\" alt=\"Chart\" width=\"75%\"/>\r\n",
+							"## Visualize the Anomalies using Plotly\n",
+							"Plot Expected value, Upper Value, Lower Value and Actual Value along with Anomaly flag\n",
+							"\n",
+							"<img src=\"https://synapse1poc.blob.core.windows.net/cosmolnksynp/cosmolnksynp/AnmaliesPlot.png\" alt=\"Chart\" width=\"75%\"/>\n",
 							""
 						]
 					},
 					{
 						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
+						"metadata": {},
 						"source": [
-							"\r\n",
-							"##import chart_studio.plotly as py\r\n",
-							"import plotly.graph_objs as go\r\n",
-							"from plotly.offline import plot\r\n",
-							"import matplotlib.pyplot as plt\r\n",
-							"from pyspark.sql.functions import col\r\n",
-							"from matplotlib.pyplot import figure\r\n",
-							" \r\n",
-							"adf = df_anomaly_single_device.toPandas()\r\n",
-							"adf_subset = df_anomaly_single_device.where(col(\"isAnomaly\") == 1).toPandas() \r\n",
-							"\r\n",
-							"plt.figure(figsize=(23,8))\r\n",
-							"plt.plot(adf['timestamp'],adf['expectedUpperValue'], color='darkred', linestyle='solid', linewidth=0.25)\r\n",
-							"plt.plot(adf['timestamp'],adf['expectedValue'], color='darkgreen', linestyle='solid', linewidth=2)\r\n",
-							"plt.plot(adf['timestamp'],adf['measureValue'], 'b', color='royalblue', linestyle='dotted', linewidth=2)\r\n",
-							"plt.plot(adf['timestamp'],adf['expectedLowerValue'],  color='black', linestyle='solid', linewidth=0.25)\r\n",
-							"plt.plot(adf_subset['timestamp'],adf_subset['measureValue'], 'ro')\r\n",
-							"plt.legend(['RPM-UpperMargin', 'RPM-ExpectedValue', 'RPM-ActualValue', 'RPM-LowerMargin', 'RPM-Anomaly'])\r\n",
-							"plt.title('RPM Anomalies with Expected, Actual, Upper and Lower Values')\r\n",
-							"plt.show()"
+							"import warnings\n",
+							"warnings.filterwarnings(\n",
+							"    \"ignore\",\n",
+							"    category=DeprecationWarning,\n",
+							"    module=\"pyspark.sql.pandas.utils\"\n",
+							")\n",
+							"\n",
+							"import matplotlib.pyplot as plt\n",
+							"from pyspark.sql.functions import col\n",
+							"\n",
+							"# Assuming df_anomaly_single_device is already defined\n",
+							"adf = df_anomaly_single_device.toPandas()\n",
+							"adf_subset = adf[adf['isAnomaly'] == 1]\n",
+							"\n",
+							"plt.figure(figsize=(23, 8))\n",
+							"plt.plot(\n",
+							"    adf['timestamp'],\n",
+							"    adf['expectedUpperValue'],\n",
+							"    color='darkred',\n",
+							"    linestyle='solid',\n",
+							"    linewidth=0.25\n",
+							")\n",
+							"plt.plot(\n",
+							"    adf['timestamp'],\n",
+							"    adf['expectedValue'],\n",
+							"    color='darkgreen',\n",
+							"    linestyle='solid',\n",
+							"    linewidth=2\n",
+							")\n",
+							"# Removed the 'b' format string to avoid redundant color warning\n",
+							"plt.plot(\n",
+							"    adf['timestamp'],\n",
+							"    adf['measureValue'],\n",
+							"    color='royalblue',\n",
+							"    linestyle='dotted',\n",
+							"    linewidth=2\n",
+							")\n",
+							"plt.plot(\n",
+							"    adf['timestamp'],\n",
+							"    adf['expectedLowerValue'],\n",
+							"    color='black',\n",
+							"    linestyle='solid',\n",
+							"    linewidth=0.25\n",
+							")\n",
+							"# Use shorthand 'ro' (red circle) without extra color kw\n",
+							"plt.plot(\n",
+							"    adf_subset['timestamp'],\n",
+							"    adf_subset['measureValue'],\n",
+							"    'ro'\n",
+							")\n",
+							"\n",
+							"plt.legend([\n",
+							"    'RPM-UpperMargin',\n",
+							"    'RPM-ExpectedValue',\n",
+							"    'RPM-ActualValue',\n",
+							"    'RPM-LowerMargin',\n",
+							"    'RPM-Anomaly'\n",
+							"])\n",
+							"plt.title('RPM Anomalies with Expected, Actual, Upper and Lower Values')\n",
+							"plt.show()\n",
+							""
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 35
 					}
 				]
 			},
